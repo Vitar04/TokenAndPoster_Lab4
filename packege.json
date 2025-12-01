@@ -1,0 +1,5 @@
+"scripts": {
+  "test": "truffle test --network=$npm_config_network",
+  "compile": "truffle compile",
+  "migrate": "truffle migrate --network=$npm_config_network"
+}
