@@ -1,59 +1,61 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.0;
+pragma solidity >=0.4.21 <0.9.0;
+
+import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 contract Poster {
-    struct Post {
-        uint256 id;
-        address user;
-        string content;
-        string tag;
-        uint256 timestamp;
+    address public tokenAddress;
+    uint256 public threshold;
+
+    address public owner;
+
+    event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
+
+    event NewPost(address indexed user, string content, bytes32 tagHash);
+
+    constructor(address _tokenAddress, uint256 _threshold) public {
+        // ЛР4: сохраняем адрес токена и порог
+        tokenAddress = _tokenAddress;
+        threshold = _threshold;
+
+        // ЛР4: инициализируем владельца
+        owner = msg.sender;
+        emit OwnershipTransferred(address(0), owner);
     }
 
-    uint256 private nextId = 1;
-    mapping(uint256 => Post) private posts;
-    uint256[] private postIds;
+    // === ЛР4: модификатор владельца ===
+    modifier onlyOwner() {
+        require(owner == msg.sender, "Ownable: caller is not the owner");
+        _;
+    }
 
-    event NewPost(uint256 indexed id, address indexed user, string content, string indexed tag);
+    // === ЛР4: смена владельца (нужно для передачи в MetaMask-адрес) ===
+    function transferOwnership(address _newOwner) public onlyOwner {
+        address oldOwner = owner;
+        owner = _newOwner;
+        emit OwnershipTransferred(oldOwner, _newOwner);
+    }
 
+    // === ЛР4: изменяемый адрес токена, только для owner ===
+    function setTokenAddress(address _newTokenAddress) public onlyOwner {
+        tokenAddress = _newTokenAddress;
+    }
+
+    // === ЛР4: изменяемый порог, только для owner ===
+    function setThreshold(uint256 _newThreshold) public onlyOwner {
+        threshold = _newThreshold;
+    }
+
+    // === Модифицированный post по ЛР4 ===
     function post(string memory content, string memory tag) public {
-        uint256 id = nextId++;
-
-        posts[id] = Post(id, msg.sender, content, tag, block.timestamp);
-        postIds.push(id);
-
-        emit NewPost(id, msg.sender, content, tag);
-    }
-
-    function updatePost(uint256 id, string memory newContent, string memory newTag) public {
-        require(posts[id].user == msg.sender, "Not your post");
-        require(posts[id].id != 0, "Post does not exist");
-
-        posts[id].content = newContent;
-        posts[id].tag = newTag;
-    }
-
-    function deletePost(uint256 id) public {
-        require(posts[id].user == msg.sender, "Not your post");
-        require(posts[id].id != 0, "Post does not exist");
-
-        delete posts[id];
-    }
-
-    function getPost(uint256 id) public view returns (Post memory) {
-        require(posts[id].id != 0, "Post does not exist");
-        return posts[id];
-    }
-
-    function getAllPosts() public view returns (Post[] memory) {
-        uint256 count = postIds.length;
-        Post[] memory result = new Post[](count);
-
-        for (uint256 i = 0; i < count; i++) {
-            uint256 id = postIds[i];
-            result[i] = posts[id];
+        // ЛР4: токен-гейтинг
+        IERC20 token = IERC20(tokenAddress);
+        uint256 balance = token.balanceOf(msg.sender);
+        if (balance < threshold) {
+            revert("Not enough tokens");
         }
 
-        return result;
+        bytes32 tagHash = keccak256(abi.encodePacked(tag));
+        emit NewPost(msg.sender, content, tagHash);
     }
 }

@@ -25,7 +25,7 @@ module.exports = {
   // Компилятор — важен для верификации: версия и optimizer должны совпадать
   compilers: {
     solc: {
-      version: "0.8.19",    // или та версия, которой ты компилировал
+      version: "0.8.20",   
       settings: {
         optimizer: { enabled: true, runs: 200 }
       }
