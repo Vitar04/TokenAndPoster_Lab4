@@ -51,32 +51,15 @@ jobs:
 
   deploy-to-vm:
     needs: docker-build-push
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
+
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Install sshpass
-        run: sudo apt-get update && sudo apt-get install -y sshpass
-
-      - name: Add host key to known_hosts
-        run: |
-          mkdir -p ~/.ssh
-          ssh-keyscan 192.168.1.52 >> ~/.ssh/known_hosts
-
-      - name: Deploy to server
+      - name: Deploy locally
         env:
-          SSH_HOST: 192.168.1.52
-          SSH_USER: devops_user
-          SSH_PASSWORD: ${{ secrets.SSH_PASSWORD }}
-          DOCKER_USER: ${{ secrets.DOCKERHUB_USERNAME }}
+          IMAGE: ${{ secrets.DOCKERHUB_USERNAME }}/poster-ui:latest
         run: |
-          sshpass -p "$SSH_PASSWORD" ssh -o StrictHostKeyChecking=no ${SSH_USER}@${SSH_HOST} << 'EOF'
-            set -e
-            mkdir -p ~/poster-ui
-            cd ~/poster-ui
-            docker stop poster-ui || true
-            docker rm poster-ui || true
-            docker pull ${DOCKER_USER}/poster-ui:latest
-            docker run -d --name poster-ui -p 8081:80 ${DOCKER_USER}/poster-ui:latest
-          EOF
+          docker pull ${IMAGE}
+          docker stop poster-ui || true
+          docker rm poster-ui || true
+          docker run -d --name poster-ui -p 8081:80 ${IMAGE}
+
