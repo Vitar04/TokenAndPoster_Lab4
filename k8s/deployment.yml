@@ -16,6 +16,6 @@ spec:
     spec:
       containers:
         - name: poster-ui-container
-          image: vitar04/poster-ui:53734e873323b8d8d5ef458f329029719ddf0ab4
+          image: vitar04/poster-ui:a421aeeafb038f64f9ea3308be67bbb8dbd026a0
           ports:
             - containerPort: 3000
