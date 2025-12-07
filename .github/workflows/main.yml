@@ -56,10 +56,8 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Set up SSH Agent
-        uses: webfactory/ssh-agent@v0.9.0
-        with:
-          ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
+      - name: Install sshpass
+        run: sudo apt-get update && sudo apt-get install -y sshpass
 
       - name: Add host key to known_hosts
         run: ssh-keyscan 192.168.1.52 >> ~/.ssh/known_hosts
@@ -68,9 +66,10 @@ jobs:
         env:
           SSH_HOST: 192.168.1.52
           SSH_USER: devops_user
+          SSH_PASSWORD: ${{ secrets.SSH_PASSWORD }}
           DOCKER_USER: ${{ secrets.DOCKERHUB_USERNAME }}
         run: |
-          ssh ${SSH_USER}@${SSH_HOST} << 'EOF'
+          sshpass -p "$SSH_PASSWORD" ssh -o StrictHostKeyChecking=no ${SSH_USER}@${SSH_HOST} << 'EOF'
             set -e
             mkdir -p ~/poster-ui
             cd ~/poster-ui
