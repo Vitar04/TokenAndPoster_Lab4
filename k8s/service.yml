@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: poster-ui-service
+spec:
+  selector:
+    app: poster-ui
+  type: NodePort
+  ports:
+    - protocol: TCP
+      port: 80        # порт сервиса внутри кластера
+      targetPort: 3000  # порт контейнера

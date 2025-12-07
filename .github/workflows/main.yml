@@ -49,6 +49,18 @@ jobs:
           push: true
           tags: ${{ secrets.DOCKERHUB_USERNAME }}/poster-ui:latest
 
+      - name: Update k8s deployment image
+        run: |
+          IMAGE_NAME=${{ secrets.DOCKERHUB_USERNAME }}/poster-ui:${{ github.sha }}
+          ./scripts/update_k8s_image.sh "$IMAGE_NAME"
+
+      - name: Push updated k8s manifest
+        env:
+          PAT: ${{ secrets.PAT_TOKEN }}
+        run: |
+          git push https://$PAT@github.com/${{ github.repository }}.git HEAD:main
+
+
   deploy-to-vm:
     needs: docker-build-push
     runs-on: self-hosted
