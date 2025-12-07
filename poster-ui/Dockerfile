@@ -8,9 +8,13 @@ RUN npm ci
 COPY . .
 RUN npm run build
 
-# Stage 2: nginx to serve static files
-FROM nginx:1.27-alpine
+# Stage 2: run Next.js app
+FROM node:20-alpine
 
-COPY --from=build /app/build /usr/share/nginx/html
-EXPOSE 80
-CMD ["nginx", "-g", "daemon off;"]
+WORKDIR /app
+COPY --from=build /app ./
+
+ENV NODE_ENV=production
+EXPOSE 3000
+
+CMD ["npm", "start"]
