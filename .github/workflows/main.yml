@@ -75,34 +75,3 @@ jobs:
           docker stop poster-ui || true
           docker rm poster-ui || true
           docker run -d --name poster-ui -p 8081:80 ${IMAGE}
-  deploy-to-k8s:
-    needs: docker-build-push
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Set up kubectl
-        uses: azure/setup-kubectl@v3
-
-      - name: Configure kubeconfig from secret
-        env:
-          KUBE_CONFIG_DATA: ${{ secrets.KUBE_CONFIG_DATA }}
-        run: |
-          mkdir -p ~/.kube
-          echo "$KUBE_CONFIG_DATA" > ~/.kube/config
-
-      - name: Update image tag in deployment (optional)
-        run: |
-          IMAGE_NAME=${{ secrets.DOCKERHUB_USERNAME }}/poster-ui:${{ github.sha }}
-          ./scripts/update_k8s_image.sh "$IMAGE_NAME"
-
-      - name: Apply Kubernetes manifests
-        run: |
-          kubectl apply -f k8s/deployment.yml
-          kubectl apply -f k8s/service.yml
-
-          echo "Current resources:"
-          kubectl get pods
-          kubectl get svc
